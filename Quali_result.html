@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>模拟赛车成绩管理系统 | 圈速排行榜</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: system-ui, 'Segoe UI', 'Poppins', 'Roboto', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(145deg, #0b1a2e 0%, #0a111f 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 30px 20px;
+            color: #eef4ff;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* 头部与密码区 */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            background: rgba(10, 25, 47, 0.7);
+            backdrop-filter: blur(8px);
+            border-radius: 32px;
+            padding: 15px 28px;
+            margin-bottom: 28px;
+            border: 1px solid rgba(72, 187, 255, 0.3);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.8rem;
+            background: linear-gradient(135deg, #FFD966, #4AA9FF);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: 1px;
+        }
+
+        .auth-area {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            background: #0f1a2c;
+            padding: 6px 16px;
+            border-radius: 48px;
+        }
+
+        .auth-area input {
+            background: #1e2a3e;
+            border: 1px solid #3b4e6b;
+            padding: 8px 14px;
+            border-radius: 40px;
+            color: white;
+            font-size: 0.9rem;
+            outline: none;
+            transition: 0.2s;
+        }
+
+        .auth-area input:focus {
+            border-color: #4AA9FF;
+            box-shadow: 0 0 5px #4AA9FF;
+        }
+
+        button {
+            background: #2c3e66;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 40px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.85rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+
+        button.primary {
+            background: #2b6c9e;
+            box-shadow: 0 2px 8px rgba(43,108,158,0.4);
+        }
+
+        button.primary:hover {
+            background: #3e8bc2;
+            transform: scale(0.97);
+        }
+
+        button.danger {
+            background: #9e3c2b;
+        }
+        button.danger:hover {
+            background: #b64a38;
+        }
+
+        button.warning {
+            background: #b46b1a;
+        }
+
+        .badge-admin {
+            background: #1f5e3e;
+            padding: 5px 12px;
+            border-radius: 40px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        /* 排行榜卡片 */
+        .ranking-card {
+            background: rgba(8, 20, 36, 0.75);
+            backdrop-filter: blur(4px);
+            border-radius: 28px;
+            border: 1px solid rgba(74, 169, 255, 0.3);
+            overflow-x: auto;
+            margin-bottom: 40px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.5);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            padding: 18px 24px 8px 24px;
+            margin: 0;
+            font-weight: 600;
+            border-bottom: 1px solid #2d425f;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .ranking-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+
+        .ranking-table th {
+            text-align: left;
+            padding: 16px 16px;
+            background: #0f1b2c;
+            color: #bbd4ff;
+            font-weight: 600;
+            border-bottom: 1px solid #2d425f;
+        }
+
+        .ranking-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #1e2f44;
+            color: #f0f4fa;
+        }
+
+        .ranking-table tr:hover td {
+            background: #13233b;
+        }
+
+        .rank-cell {
+            font-weight: bold;
+            width: 70px;
+            color: #FFD966;
+        }
+
+        .driver-name {
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .best-time {
+            font-family: monospace;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #7fe0ff;
+        }
+
+        .elimination-row td {
+            background-color: #7a2e2e80;
+            text-align: center;
+            font-weight: bold;
+            color: #ffb7b7;
+            border-top: 2px solid #ff5e5e;
+            border-bottom: 2px solid #ff5e5e;
+            padding: 12px;
+            letter-spacing: 2px;
+        }
+
+        .elimination-row td span {
+            background: #b91c1c;
+            padding: 4px 20px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+        }
+
+        /* 管理面板 (仅管理员可见) */
+        .admin-panel {
+            background: rgba(0, 0, 0, 0.55);
+            border-radius: 28px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid #2f6b47;
+            transition: all 0.2s;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            border-left: 5px solid #4AA9FF;
+            padding-left: 16px;
+        }
+
+        .add-driver-form {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+            background: #112135;
+            padding: 15px 20px;
+            border-radius: 50px;
+            margin-bottom: 28px;
+        }
+
+        .add-driver-form input {
+            background: #1f2e45;
+            border: 1px solid #3b5680;
+            padding: 10px 18px;
+            border-radius: 40px;
+            color: white;
+            flex: 2;
+            min-width: 180px;
+        }
+
+        .driver-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .driver-card {
+            background: #0f1a29d9;
+            border-radius: 24px;
+            padding: 16px 20px;
+            transition: 0.1s;
+            border: 1px solid #2f4568;
+        }
+
+        .driver-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+            border-bottom: 1px dashed #2f4a6e;
+            padding-bottom: 8px;
+        }
+
+        .driver-name-large {
+            font-size: 1.3rem;
+            font-weight: bold;
+            background: linear-gradient(120deg, #e2f0ff, #9cc9ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .lap-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            margin: 12px 0;
+        }
+
+        .lap-badge {
+            background: #1e3a4d;
+            padding: 5px 12px;
+            border-radius: 30px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .lap-badge button {
+            background: none;
+            padding: 0 6px;
+            font-size: 1rem;
+            box-shadow: none;
+            color: #ff9482;
+        }
+
+        .add-lap-form {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+
+        .add-lap-form input {
+            background: #1c2b40;
+            border: 1px solid #3e618b;
+            padding: 6px 12px;
+            border-radius: 28px;
+            color: white;
+            width: 130px;
+        }
+
+        hr {
+            border-color: #2f496e;
+        }
+
+        .info-note {
+            font-size: 0.75rem;
+            color: #99badd;
+            margin-top: 8px;
+        }
+
+        @media (max-width: 760px) {
+            .ranking-table th, .ranking-table td {
+                padding: 8px 10px;
+            }
+            .driver-card-header {
+                flex-direction: column;
+                align-items: start;
+                gap: 8px;
+            }
+        }
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 0.7rem;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>🏁 模拟赛车圈速榜 · 淘汰区警示</h1>
+        <div class="auth-area">
+            <input type="password" id="adminPassword" placeholder="管理员密码" autocomplete="off">
+            <button id="loginBtn">🔐 登录管理</button>
+            <button id="logoutBtn" style="display:none;">🚪 退出管理</button>
+            <span id="authStatus" class="badge-admin" style="background:#2c3e4e;">👁️ 访客模式</span>
+        </div>
+    </div>
+
+    <!-- 排行榜区域 -->
+    <div class="ranking-card">
+        <div class="section-title">
+            🏆 实时排名 (取个人最短圈速)
+            <span style="font-size:0.8rem;">⚡ 淘汰线下方车手进入淘汰区</span>
+        </div>
+        <div style="overflow-x: auto;">
+            <table class="ranking-table" id="rankingTable">
+                <thead>
+                <tr><th># 排名</th><th>车手</th><th>最佳圈速</th><th>有效圈数</th></tr>
+                </thead>
+                <tbody id="rankingBody">
+                <tr><td colspan="4" style="text-align:center;">加载中...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 管理员专用面板 (动态显示) -->
+    <div id="adminPanel" style="display: none;">
+        <div class="admin-panel">
+            <div class="panel-header">
+                <h3>✍️ 管理控制台 (仅管理员)</h3>
+                <span style="font-size:0.8rem;">✅ 可添加车手 / 为任意车手录入新圈速</span>
+            </div>
+            <!-- 添加车手区域 -->
+            <div class="add-driver-form">
+                <input type="text" id="newDriverName" placeholder="车手姓名 (例如: S.Vettel)" autocomplete="off">
+                <button id="addDriverBtn" class="primary">➕ 添加新车手</button>
+                <span class="info-note">* 新车手初始无圈速, 请下方添加成绩</span>
+            </div>
+            <!-- 所有车手详情卡片 (支持添加圈速) -->
+            <div id="driversManagementArea" class="driver-cards">
+                <!-- 动态渲染每个车手的管理卡片 -->
+            </div>
+        </div>
+    </div>
+    <footer>⚡ 圈速格式: mm:ss.xxx 或 ss.xxx (例如 1:23.456 或 98.321) 自动取最短 | 仅管理员可修改数据</footer>
+</div>
+
+<script>
+    // ---------- 数据模型 ----------
+    let drivers = [];        // [{ id, name, lapTimesMs: [毫秒] }]
+    let adminLoggedIn = false;
+    const ADMIN_PWD = "simrace2025";     // 特定密码（可修改但满足题目）
+
+    // 辅助函数：时间字符串转毫秒 (支持 mm:ss.ms 或 ss.ms)
+    function timeToMs(timeStr) {
+        if (!timeStr || timeStr.trim() === "") return null;
+        let str = timeStr.trim();
+        let minutes = 0, seconds = 0, millis = 0;
+        if (str.includes(":")) {
+            let parts = str.split(":");
+            if (parts.length === 2) {
+                minutes = parseFloat(parts[0]) || 0;
+                let secPart = parts[1];
+                let secFloat = parseFloat(secPart);
+                if (isNaN(secFloat)) return null;
+                seconds = Math.floor(secFloat);
+                millis = Math.round((secFloat - seconds) * 1000);
+                if (millis >= 1000) { seconds += Math.floor(millis/1000); millis %= 1000; }
+                if (seconds >= 60) { minutes += Math.floor(seconds/60); seconds %= 60; }
+                return minutes * 60000 + seconds * 1000 + millis;
+            } else return null;
+        } else {
+            let secFloat = parseFloat(str);
+            if (isNaN(secFloat)) return null;
+            let totalMs = secFloat * 1000;
+            return Math.round(totalMs);
+        }
+    }
+
+    // 毫秒转 mm:ss.xxx 格式
+    function msToTime(ms) {
+        if (ms === null || ms === undefined || !isFinite(ms)) return "——:——.———";
+        let sign = ms < 0 ? -1 : 1;
+        ms = Math.abs(ms);
+        let minutes = Math.floor(ms / 60000);
+        let seconds = Math.floor((ms % 60000) / 1000);
+        let millis = ms % 1000;
+        return `${minutes}:${seconds.toString().padStart(2,'0')}.${millis.toString().padStart(3,'0')}`;
+    }
+
+    // 获取车手最佳圈速(毫秒), 无圈速返回 Infinity
+    function getBestLapMs(driver) {
+        if (!driver.lapTimesMs || driver.lapTimesMs.length === 0) return Infinity;
+        return Math.min(...driver.lapTimesMs);
+    }
+
+    // 保存至localStorage
+    function saveData() {
+        localStorage.setItem("simRacingDrivers", JSON.stringify(drivers));
+    }
+
+    // 加载初始示例数据 (超过51人展示淘汰区效果)
+    function loadSampleData() {
+        const stored = localStorage.getItem("simRacingDrivers");
+        if (stored) {
+            drivers = JSON.parse(stored);
+            // 数据兼容旧版: 确保每个driver有lapTimesMs数组
+            drivers.forEach(d => { if (!d.lapTimesMs) d.lapTimesMs = []; });
+            return;
+        }
+        // 生成55名车手 + 部分圈速 让淘汰区红线展现 (第50与51名之间)
+        drivers = [];
+        const names = ["刘易斯", "马克斯", "夏尔", "兰多", "卡洛斯", "乔治", "费尔南多", "瓦尔特里", "塞尔吉奥", "皮埃尔",
+                       "埃斯特班", "角田", "周冠宇", "尼科", "米克", "丹尼尔", "凯文", "兰斯", "亚历山大", "洛根",
+                       "奥利弗", "杰克", "泰奥", "罗伯特", "弗雷德里克", "帕斯托", "简森", "基米", "塞巴斯蒂安", "费利佩",
+                       "鲁本斯", "大卫", "约翰", "迈克尔", "尼基", "阿兰", "吉姆", "杰基", "尼尔森", "科科",
+                       "尼格尔", "达蒙", "雅克", "米卡", "刘易斯B", "简", "马克", "埃里奥", "布鲁斯", "乔迪","里卡多","帕特里克","克里斯","詹卡洛","斯特林"];
+        for (let i = 0; i < 65; i++) {   // 65名车手确保淘汰区明显
+            let name = names[i % names.length] + (Math.floor(i / names.length) > 0 ? ` ${Math.floor(i/names.length)+1}` : "");
+            let lapCount = Math.floor(Math.random() * 4); // 0~3圈
+            let laps = [];
+            for (let j = 0; j < lapCount; j++) {
+                let baseMs = 80000 + Math.random() * 25000; // 1:20~1:45之间
+                laps.push(Math.floor(baseMs));
+            }
+            // 少数特别快的车手
+            if (i < 15) laps.push(75000 + Math.random() * 5000);
+            drivers.push({
+                id: Date.now() + i + Math.random() * 10000,
+                name: name,
+                lapTimesMs: laps
+            });
+        }
+        // 额外保证前几名有优秀成绩，使排名合理
+        drivers[0].lapTimesMs.push(73200, 72850);
+        drivers[1].lapTimesMs.push(74000);
+        drivers[2].lapTimesMs.push(74800);
+        drivers[3].lapTimesMs.push(75300);
+        saveData();
+    }
+
+    // ---------- 核心: 排序并生成排名表 (含淘汰区红线: 第50与51名之间) ----------
+    function getSortedDrivers() {
+        return [...drivers].sort((a,b) => {
+            let bestA = getBestLapMs(a);
+            let bestB = getBestLapMs(b);
+            if (bestA === Infinity && bestB === Infinity) return a.name.localeCompare(b.name);
+            if (bestA === Infinity) return 1;
+            if (bestB === Infinity) return -1;
+            return bestA - bestB;
+        });
+    }
+
+    // 渲染排行榜 (含淘汰红线)
+    function renderRanking() {
+        const tbody = document.getElementById("rankingBody");
+        if (!tbody) return;
+        const sorted = getSortedDrivers();
+        const total = sorted.length;
+        tbody.innerHTML = "";
+        // 遍历生成行，当索引为49 (第50名) 且 总数>=51 时插入分隔行
+        for (let i = 0; i < total; i++) {
+            const driver = sorted[i];
+            const bestMs = getBestLapMs(driver);
+            const bestFormatted = (bestMs === Infinity) ? "⛔ 无圈速" : msToTime(bestMs);
+            const lapCount = driver.lapTimesMs.length;
+            const rank = i + 1;
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td class="rank-cell">${rank}</td>
+                <td class="driver-name">${escapeHtml(driver.name)}</td>
+                <td class="best-time">${bestFormatted}</td>
+                <td>${lapCount}</td>
+            `;
+            tbody.appendChild(row);
+
+            // 关键: 在第50名之后（即i === 49）并且总车手数 >= 51 ，则插入淘汰红线分隔行
+            if (i === 49 && total >= 51) {
+                const elimRow = document.createElement("tr");
+                elimRow.className = "elimination-row";
+                elimRow.innerHTML = `<td colspan="4" style="text-align:center;"><span>⚠️ 淘 汰 区 红 线 ⚠️</span> (第50名与第51名分界线)</td>`;
+                tbody.appendChild(elimRow);
+            }
+        }
+        if (total === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">暂无车手数据，请管理员添加</td></tr>';
+        }
+    }
+
+    // 渲染管理区 (只有admin可见)
+    function renderAdminPanel() {
+        const container = document.getElementById("driversManagementArea");
+        if (!container) return;
+        if (!adminLoggedIn) return;
+        if (drivers.length === 0) {
+            container.innerHTML = '<div style="padding:20px;text-align:center;">暂无车手，请点击上方按钮添加。</div>';
+            return;
+        }
+        let html = '';
+        drivers.forEach(driver => {
+            const bestMs = getBestLapMs(driver);
+            const bestStr = (bestMs === Infinity) ? '无有效圈速' : msToTime(bestMs);
+            let lapsHtml = '';
+            if (driver.lapTimesMs.length === 0) {
+                lapsHtml = '<div class="info-note">⏳ 暂无圈速记录，请添加首个成绩。</div>';
+            } else {
+                driver.lapTimesMs.forEach((ms, idx) => {
+                    lapsHtml += `
+                        <div class="lap-badge">
+                            🏁 #${idx+1} ${msToTime(ms)}
+                            <button class="deleteLapBtn" data-driverid="${driver.id}" data-lapindex="${idx}" title="删除此圈速">🗑️</button>
+                        </div>
+                    `;
+                });
+            }
+            html += `
+                <div class="driver-card" data-driverid="${driver.id}">
+                    <div class="driver-card-header">
+                        <div class="driver-name-large">🏎️ ${escapeHtml(driver.name)}</div>
+                        <div>⭐ 最佳: ${bestStr} &nbsp;| 📊 圈数: ${driver.lapTimesMs.length}</div>
+                        <button class="danger deleteDriverBtn" data-id="${driver.id}">删除车手</button>
+                    </div>
+                    <div class="lap-list">
+                        ${lapsHtml}
+                    </div>
+                    <div class="add-lap-form">
+                        <input type="text" placeholder="新圈速 (例: 1:23.456 或 94.221)" class="newLapInput" data-id="${driver.id}">
+                        <button class="primary addLapForDriverBtn" data-id="${driver.id}">➕ 添加圈速</button>
+                        <span class="info-note">自动取最短参与排名</span>
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+
+        // 绑定动态删除圈速事件
+        document.querySelectorAll('.deleteLapBtn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (!adminLoggedIn) return alert("无权限，请先登录管理员");
+                const driverId = Number(btn.dataset.driverid);
+                const lapIndex = parseInt(btn.dataset.lapindex);
+                const driver = drivers.find(d => d.id === driverId);
+                if (driver && driver.lapTimesMs[lapIndex] !== undefined) {
+                    driver.lapTimesMs.splice(lapIndex, 1);
+                    saveData();
+                    refreshAll();
+                }
+            });
+        });
+        // 删除车手
+        document.querySelectorAll('.deleteDriverBtn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                if (!adminLoggedIn) return alert("无权限");
+                const id = Number(btn.dataset.id);
+                if (confirm("确定要移除这位车手及其所有圈速吗？")) {
+                    drivers = drivers.filter(d => d.id !== id);
+                    saveData();
+                    refreshAll();
+                }
+            });
+        });
+        // 添加圈速
+        document.querySelectorAll('.addLapForDriverBtn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                if (!adminLoggedIn) return alert("请先登录管理员以填写成绩");
+                const driverId = Number(btn.dataset.id);
+                const input = btn.parentElement.querySelector('.newLapInput');
+                const rawTime = input.value.trim();
+                if (!rawTime) return alert("请输入圈速");
+                const ms = timeToMs(rawTime);
+                if (ms === null || isNaN(ms) || ms <= 0) {
+                    alert("无效的时间格式！请使用 mm:ss.xxx 或者 ss.xxx  (例如 1:23.456 或 95.2)");
+                    return;
+                }
+                const driver = drivers.find(d => d.id === driverId);
+                if (driver) {
+                    driver.lapTimesMs.push(ms);
+                    saveData();
+                    input.value = '';
+                    refreshAll();
+                } else {
+                    alert("车手不存在");
+                }
+            });
+        });
+    }
+
+    // 添加新车手 (管理员)
+    function addNewDriver() {
+        if (!adminLoggedIn) { alert("只有管理员可以添加车手"); return false; }
+        const nameInput = document.getElementById("newDriverName");
+        const name = nameInput.value.trim();
+        if (!name) { alert("请输入车手姓名"); return false; }
+        const newId = Date.now();
+        drivers.push({
+            id: newId,
+            name: name,
+            lapTimesMs: []
+        });
+        saveData();
+        nameInput.value = '';
+        refreshAll();
+        return true;
+    }
+
+    // 刷新整个UI (排名 + 管理面板可见性)
+    function refreshAll() {
+        renderRanking();
+        if (adminLoggedIn) {
+            const panel = document.getElementById("adminPanel");
+            if (panel) panel.style.display = "block";
+            renderAdminPanel();
+        } else {
+            const panel = document.getElementById("adminPanel");
+            if (panel) panel.style.display = "none";
+        }
+    }
+
+    // 辅助转义
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+            return c;
+        });
+    }
+
+    // 登录逻辑
+    function login() {
+        const pwdInput = document.getElementById("adminPassword");
+        if (pwdInput.value === ADMIN_PWD) {
+            adminLoggedIn = true;
+            document.getElementById("authStatus").innerHTML = "👑 管理员模式";
+            document.getElementById("authStatus").style.background = "#1f5e3e";
+            document.getElementById("loginBtn").style.display = "none";
+            document.getElementById("logoutBtn").style.display = "inline-block";
+            document.getElementById("adminPassword").value = "";
+            refreshAll();
+        } else {
+            alert("密码错误！无法进入管理后台，您仍可查看排名。");
+            adminLoggedIn = false;
+            refreshAll();
+        }
+    }
+
+    function logout() {
+        adminLoggedIn = false;
+        document.getElementById("authStatus").innerHTML = "👁️ 访客模式";
+        document.getElementById("authStatus").style.background = "#2c3e4e";
+        document.getElementById("loginBtn").style.display = "inline-block";
+        document.getElementById("logoutBtn").style.display = "none";
+        refreshAll();
+    }
+
+    // 初始化页面事件与数据
+    function init() {
+        loadSampleData();
+        refreshAll();
+        document.getElementById("loginBtn").addEventListener("click", login);
+        document.getElementById("logoutBtn").addEventListener("click", logout);
+        document.getElementById("addDriverBtn").addEventListener("click", () => addNewDriver());
+        // 在全局未登录时管理区按钮不可见，但绑定在refresh里已确保，额外保护
+        // 回车快捷登录
+        document.getElementById("adminPassword").addEventListener("keypress", (e) => {
+            if(e.key === "Enter") login();
+        });
+    }
+
+    init();
+</script>
+</body>
+</html>
